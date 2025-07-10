@@ -1,23 +1,36 @@
 import { Link } from 'react-router-dom';
-import { Sparkles, Shield, Zap, Camera, BarChart, Eye, LucideGithub, Facebook, Twitter, Instagram, Mail } from 'lucide-react';
+import { Sparkles, Shield, Zap, Camera, BarChart, Eye, LucideGithub, Facebook, Twitter, Instagram, Mail, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
 const WelcomePage = ({ isAuthenticated }) => {
   if (isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md p-8 bg-fer-bg-card border-fer-bg-card text-center">
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold text-fer-text">Welcome Back!</h1>
-              <p className="text-fer-text/70">Continue analyzing facial emotions in real-time.</p>
+      <div className="min-h-screen flex items-center justify-center p-4 bg-fer-bg-main">
+        <Card className="w-full max-w-md p-10 bg-fer-bg-card border-fer-bg-card text-center shadow-lg">
+          <div className="space-y-8">
+            <div className="mx-auto w-20 h-20 bg-fer-primary/10 rounded-full flex items-center justify-center">
+              <UserCheck className="w-10 h-10 text-fer-primary animate-pulse" />
             </div>
-            <Link to="/profile">
-              <Button className="w-full bg-fer-primary hover:bg-fer-primary/90 text-white">
-                Go to Dashboard
-              </Button>
-            </Link>
+            
+            <div className="space-y-3">
+              <h1 className="text-4xl font-bold text-fer-text">Welcome Back!</h1>
+              <p className="text-lg text-fer-text/70">Continue analyzing realtime facial emotions.</p>
+            </div>
+            
+            <div>
+              <Link to="/profile">
+                <Button className="w-full bg-fer-primary hover:bg-fer-primary/90 text-white text-lg h-14 rounded-lg transition-all hover:shadow-md">
+                  Go to Dashboard
+                </Button>
+              </Link>
+            </div>
+            
+            <div>
+              <p className="text-sm text-fer-text/50">
+                Your last session: <span className="text-fer-accent">Today, 2:30 PM</span>
+              </p>
+            </div>
           </div>
         </Card>
       </div>
