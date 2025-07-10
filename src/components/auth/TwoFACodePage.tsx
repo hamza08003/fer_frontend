@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Shield } from 'lucide-react';
+import { ArrowLeft, Shield, Check } from 'lucide-react'; // Added Check icon
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ const TwoFACodePage = ({ setIsAuthenticated, setUser }) => {
   const [backupCode, setBackupCode] = useState('');
   const [animationState, setAnimationState] = useState('idle'); // 'idle', 'animating', 'success', 'error'
   const [animatingIndex, setAnimatingIndex] = useState(-1);
+  const [showSuccess, setShowSuccess] = useState(false); // New state for success message
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -39,27 +40,34 @@ const TwoFACodePage = ({ setIsAuthenticated, setUser }) => {
       const fullCode = code.join('');
       if (fullCode === '123456') {
         setAnimationState('success');
+        
+        // Show success message after boxes turn green
         setTimeout(() => {
-          // success login after showing success state
-          const mockUser = {
-            id: 1,
-            name: 'John Doe',
-            username: '2fa@example.com',
-            email: '2fa@example.com',
-            joinDate: '2024-01-15',
-            loginCount: 42,
-            emailVerified: true,
-            twoFactorEnabled: true
-          };
+          setShowSuccess(true);
           
-          setUser(mockUser);
-          setIsAuthenticated(true);
-          toast({
-            title: "Authentication successful!",
-            description: "Welcome back to your account.",
-          });
-          navigate('/profile');
-        }, 1000);
+          // Wait a bit longer before redirecting
+          setTimeout(() => {
+            // success login after showing success state
+            const mockUser = {
+              id: 1,
+              name: 'John Doe',
+              username: '2fa@example.com',
+              email: '2fa@example.com',
+              joinDate: '2024-01-15',
+              loginCount: 42,
+              emailVerified: true,
+              twoFactorEnabled: true
+            };
+            
+            setUser(mockUser);
+            setIsAuthenticated(true);
+            toast({
+              title: "Authentication successful!",
+              description: "Welcome back to your account.",
+            });
+            navigate('/profile');
+          }, 2000); // Longer delay before redirect
+        }, 500); // Delay before showing success message
       } else {
         setAnimationState('error');
         setTimeout(() => {
@@ -180,87 +188,107 @@ const TwoFACodePage = ({ setIsAuthenticated, setUser }) => {
             </div>
           </div>
 
-          <div className="text-center">
-            <div className="w-16 h-16 bg-fer-info/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Shield className="w-8 h-8 text-fer-info" />
-            </div>
-          </div>
-
-          {error && (
-            <div className="p-4 bg-fer-error/10 border border-fer-error rounded-lg">
-              <p className="text-fer-error text-sm text-center">{error}</p>
-            </div>
-          )}
-
-          {!showBackupCode ? (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="flex justify-center space-x-2">
-                {code.map((digit, index) => (
-                  <Input
-                    key={index}
-                    ref={(el) => (inputRefs.current[index] = el)}
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleCodeChange(index, e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(index, e)}
-                    className={getInputClass(index)}
-                    disabled={animationState !== 'idle' && animationState !== ''}
-                  />
-                ))}
+          {/* Success message */}
+          {showSuccess ? (
+            <div className="text-center space-y-4 animate-fade-in">
+              <div className="mx-auto w-16 h-16 bg-fer-accent/20 rounded-full flex items-center justify-center animate-scale-in">
+                <Check className="w-8 h-8 text-fer-accent animate-check" />
               </div>
-
-              <Button
-                type="submit"
-                className="w-full bg-fer-primary hover:bg-fer-primary/90 text-white h-12"
-                disabled={isLoading || animationState !== 'idle'}
-              >
-                {isLoading ? 'Verifying...' : 'Verify Code'}
-              </Button>
-            </form>
+              <div className="space-y-1">
+                <p className="text-fer-accent font-medium">
+                  2FA Verification Successful
+                </p>
+                <p className="text-fer-primary font-medium">
+                  Redirecting you to your Profile
+                </p>
+              </div>
+            </div>
           ) : (
-            <form onSubmit={handleBackupCodeSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-fer-text font-medium">Backup Code</label>
-                <Input
-                  type="text"
-                  value={backupCode}
-                  onChange={(e) => setBackupCode(e.target.value)}
-                  className="bg-fer-bg-main border-fer-bg-main text-fer-text focus:border-fer-primary"
-                  placeholder="Enter your backup code"
-                  required
-                />
+            <>
+              <div className="text-center">
+                <div className="w-16 h-16 bg-fer-info/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Shield className="w-8 h-8 text-fer-info" />
+                </div>
               </div>
 
-              <Button
-                type="submit"
-                className="w-full bg-fer-primary hover:bg-fer-primary/90 text-white h-12"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Verifying...' : 'Use Backup Code'}
-              </Button>
-            </form>
-          )}
+              {error && (
+                <div className="p-4 bg-fer-error/10 border border-fer-error rounded-lg">
+                  <p className="text-fer-error text-sm text-center">{error}</p>
+                </div>
+              )}
 
-          <div className="text-center space-y-2">
-            <Button
-              variant="ghost"
-              className="text-fer-info hover:text-fer-info/80 text-sm"
-              onClick={() => setShowBackupCode(!showBackupCode)}
-            >
-              {showBackupCode ? 'Use authenticator code instead' : 'Use backup code instead'}
-            </Button>
-            
-            <p className="text-xs text-fer-text/50">
-              Demo: Use code "123456" or backup code "backup123"
-            </p>
-          </div>
+              {!showBackupCode ? (
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="flex justify-center space-x-2">
+                    {code.map((digit, index) => (
+                      <Input
+                        key={index}
+                        ref={(el) => (inputRefs.current[index] = el)}
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handleCodeChange(index, e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(index, e)}
+                        className={getInputClass(index)}
+                        disabled={animationState !== 'idle' && animationState !== ''}
+                      />
+                    ))}
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full bg-fer-primary hover:bg-fer-primary/90 text-white h-12"
+                    disabled={isLoading || animationState !== 'idle'}
+                  >
+                    {isLoading ? 'Verifying...' : 'Verify Code'}
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleBackupCodeSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-fer-text font-medium">Backup Code</label>
+                    <Input
+                      type="text"
+                      value={backupCode}
+                      onChange={(e) => setBackupCode(e.target.value)}
+                      className="bg-fer-bg-main border-fer-bg-main text-fer-text focus:border-fer-primary"
+                      placeholder="Enter your backup code"
+                      required
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full bg-fer-primary hover:bg-fer-primary/90 text-white h-12"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Verifying...' : 'Use Backup Code'}
+                  </Button>
+                </form>
+              )}
+
+              <div className="text-center space-y-2">
+                <Button
+                  variant="ghost"
+                  className="text-fer-info hover:text-fer-info/80 text-sm"
+                  onClick={() => setShowBackupCode(!showBackupCode)}
+                >
+                  {showBackupCode ? 'Use authenticator code instead' : 'Use backup code instead'}
+                </Button>
+                
+                <p className="text-xs text-fer-text/50">
+                  Demo: Use code "123456" or backup code "backup123"
+                </p>
+              </div>
+            </>
+          )}
         </div>
       </Card>
     </div>
   );
 };
+
 
 export default TwoFACodePage;
