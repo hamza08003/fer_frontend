@@ -46,12 +46,18 @@ const UserProfilePage = ({ user, setIsAuthenticated, setUser }) => {
               
               {/* Add more spacing with mb-8 */}
               <div className="flex flex-wrap gap-2 mb-8">
-                {user.emailVerified && (
+                {user.emailVerified ? (
                   <Badge className="bg-fer-accent/20 text-fer-accent border-fer-accent">
                     <Check className="w-3 h-3 mr-1" />
                     Email Verified
                   </Badge>
+                ) : (
+                  <Badge variant="outline" className="border-fer-error/30 text-fer-error">
+                    <X className="w-3 h-3 mr-1" />
+                    Email Unverified
+                  </Badge>
                 )}
+                
                 {user.twoFactorEnabled ? (
                   <Badge className="bg-fer-info/20 text-fer-info border-fer-info">
                     <Shield className="w-3 h-3 mr-1" />
