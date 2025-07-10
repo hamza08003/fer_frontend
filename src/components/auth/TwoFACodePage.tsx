@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Shield } from 'lucide-react';
@@ -13,6 +12,8 @@ const TwoFACodePage = ({ setIsAuthenticated, setUser }) => {
   const [error, setError] = useState('');
   const [showBackupCode, setShowBackupCode] = useState(false);
   const [backupCode, setBackupCode] = useState('');
+  const [animationState, setAnimationState] = useState('idle'); // 'idle', 'animating', 'success', 'error'
+  const [animatingIndex, setAnimatingIndex] = useState(-1);
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -24,6 +25,56 @@ const TwoFACodePage = ({ setIsAuthenticated, setUser }) => {
       inputRefs.current[0].focus();
     }
   }, []);
+  
+  // Animation sequence effect
+  useEffect(() => {
+    if (animationState === 'animating' && animatingIndex < 6) {
+      const timer = setTimeout(() => {
+        setAnimatingIndex(prevIndex => prevIndex + 1);
+      }, 150); // Time between each digit animation
+      
+      return () => clearTimeout(timer);
+    } else if (animationState === 'animating' && animatingIndex >= 6) {
+      // animation sequence completed
+      const fullCode = code.join('');
+      if (fullCode === '123456') {
+        setAnimationState('success');
+        setTimeout(() => {
+          // success login after showing success state
+          const mockUser = {
+            id: 1,
+            name: 'John Doe',
+            username: '2fa@example.com',
+            email: '2fa@example.com',
+            joinDate: '2024-01-15',
+            loginCount: 42,
+            emailVerified: true,
+            twoFactorEnabled: true
+          };
+          
+          setUser(mockUser);
+          setIsAuthenticated(true);
+          toast({
+            title: "Authentication successful!",
+            description: "Welcome back to your account.",
+          });
+          navigate('/profile');
+        }, 1000);
+      } else {
+        setAnimationState('error');
+        setTimeout(() => {
+          // reset animation state after showing error
+          setAnimationState('idle');
+          setAnimatingIndex(-1);
+          setCode(['', '', '', '', '', '']);
+          setError('Invalid verification code. Please try again.');
+          if (inputRefs.current[0]) {
+            inputRefs.current[0].focus();
+          }
+        }, 1000);
+      }
+    }
+  }, [animationState, animatingIndex, code, toast, setIsAuthenticated, setUser, navigate]);
 
   const handleCodeChange = (index, value) => {
     if (value.length > 1) return;
@@ -40,7 +91,7 @@ const TwoFACodePage = ({ setIsAuthenticated, setUser }) => {
   };
 
   const handleKeyDown = (index, e) => {
-    // Handle backspace
+    // handle backspace
     if (e.key === 'Backspace' && !code[index] && index > 0) {
       inputRefs.current[index - 1].focus();
     }
@@ -57,37 +108,27 @@ const TwoFACodePage = ({ setIsAuthenticated, setUser }) => {
     
     setIsLoading(true);
     
+    // Start animation sequence
     setTimeout(() => {
       setIsLoading(false);
-      
-      if (fullCode === '123456') {
-        // Success
-        const mockUser = {
-          id: 1,
-          name: 'John Doe',
-          username: '2fa@example.com',
-          email: '2fa@example.com',
-          joinDate: '2024-01-15',
-          loginCount: 42,
-          emailVerified: true,
-          twoFactorEnabled: true
-        };
-        
-        setUser(mockUser);
-        setIsAuthenticated(true);
-        toast({
-          title: "Authentication successful!",
-          description: "Welcome back to your account.",
-        });
-        navigate('/profile');
-      } else {
-        setError('Invalid verification code. Please try again.');
-        setCode(['', '', '', '', '', '']);
-        if (inputRefs.current[0]) {
-          inputRefs.current[0].focus();
-        }
-      }
-    }, 1500);
+      setAnimationState('animating');
+      setAnimatingIndex(0);
+    }, 600);
+  };
+
+  // Get the CSS class for each OTP input
+  const getInputClass = (index) => {
+    let baseClass = "w-12 h-12 text-center text-lg font-mono bg-fer-bg-main border-fer-bg-main text-fer-text focus:border-fer-primary transition-all duration-200";
+    
+    if (animationState === 'animating' && index <= animatingIndex) {
+      baseClass += " scale-110"; // pop-up effect
+    } else if (animationState === 'success') {
+      baseClass += " border-fer-accent scale-100";
+    } else if (animationState === 'error') {
+      baseClass += " border-fer-error scale-100";
+    }
+    
+    return baseClass;
   };
 
   const handleBackupCodeSubmit = async (e) => {
@@ -165,7 +206,8 @@ const TwoFACodePage = ({ setIsAuthenticated, setUser }) => {
                     value={digit}
                     onChange={(e) => handleCodeChange(index, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(index, e)}
-                    className="w-12 h-12 text-center text-lg font-mono bg-fer-bg-main border-fer-bg-main text-fer-text focus:border-fer-primary"
+                    className={getInputClass(index)}
+                    disabled={animationState !== 'idle' && animationState !== ''}
                   />
                 ))}
               </div>
@@ -173,7 +215,7 @@ const TwoFACodePage = ({ setIsAuthenticated, setUser }) => {
               <Button
                 type="submit"
                 className="w-full bg-fer-primary hover:bg-fer-primary/90 text-white h-12"
-                disabled={isLoading}
+                disabled={isLoading || animationState !== 'idle'}
               >
                 {isLoading ? 'Verifying...' : 'Verify Code'}
               </Button>
