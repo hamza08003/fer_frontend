@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Mail, Check } from 'lucide-react';
@@ -78,7 +77,7 @@ const ForgotPasswordPage = () => {
               >
                 {isLoading ? 'Sending...' : 'Resend Reset Link'}
               </Button>
-              <Link to="/login">
+              <Link to="/login" className="block mt-4">
                 <Button className="w-full bg-fer-primary hover:bg-fer-primary/90 text-white">
                   Back to Sign In
                 </Button>
