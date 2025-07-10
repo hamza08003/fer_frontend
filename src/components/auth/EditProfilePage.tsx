@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, User, Mail, AtSign } from 'lucide-react';
@@ -106,7 +105,7 @@ const EditProfilePage = ({ user, setUser }) => {
                 >
                   Resend Verification Email
                 </Button>
-                <Link to="/profile">
+                <Link to="/profile" className="block mt-8">
                   <Button className="w-full bg-fer-primary hover:bg-fer-primary/90 text-white">
                     Back to Profile
                   </Button>
