@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 
-const SignUpPage = () => {
+const SignUpPage = (props: object) => {
   const [formData, setFormData] = useState({
     name: '',
     username: '',
@@ -20,13 +20,25 @@ const SignUpPage = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState({
+    name: null,
+    username: null,
+    email: null,
+    password: null,
+    confirmPassword: null
+  });
   
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors = {
+        name: null,
+        username: null,
+        email: null,
+        password: null,
+        confirmPassword: null
+    };
     
     if (!formData.name.trim()) newErrors.name = 'Name is required';
     if (!formData.username.trim()) newErrors.username = 'Username is required';
@@ -40,7 +52,13 @@ const SignUpPage = () => {
     }
     
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    // If there are no errors (all keys have null va;), return true
+    if (Object.values(newErrors).every(error => error === null)) {
+      return true;
+    }
+    // If there are errors, return false
+
+    return false;
   };
 
   const handleSubmit = async (e) => {

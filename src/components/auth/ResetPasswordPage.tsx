@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 
-const ResetPasswordPage = () => {
+const ResetPasswordPage = (props: object) => {
   const [formData, setFormData] = useState({
     password: '',
     confirmPassword: ''
@@ -18,7 +18,10 @@ const ResetPasswordPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isExpired, setIsExpired] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState({
+    password: null,
+    confirmPassword: null
+  });
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -33,7 +36,10 @@ const ResetPasswordPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const newErrors = {};
+    const newErrors = {
+        password: null,
+        confirmPassword: null
+    };
     
     if (!formData.password) {
       newErrors.password = 'Password is required';
@@ -47,7 +53,9 @@ const ResetPasswordPage = () => {
     
     setErrors(newErrors);
     
-    if (Object.keys(newErrors).length > 0) return;
+    if (Object.values(newErrors).some(error => error)) {
+      return;
+    }
     
     setIsLoading(true);
     
