@@ -17,7 +17,11 @@ const LoginPage = ({ setIsAuthenticated, setUser }) => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState({
+    username: null,
+    password: null,
+    general: null
+  });
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -25,7 +29,11 @@ const LoginPage = ({ setIsAuthenticated, setUser }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setErrors({});
+    setErrors({
+        username: null,
+        password: null,
+        general: null
+    });
     
     // Simulate API call
     setTimeout(() => {
@@ -33,12 +41,12 @@ const LoginPage = ({ setIsAuthenticated, setUser }) => {
       
       // Simulate different scenarios
       if (formData.username === 'unverified@example.com') {
-        setErrors({ general: 'Please verify your email before signing in.' });
+        setErrors({...errors,  general: 'Please verify your email before signing in.' });
         return;
       }
       
       if (formData.password === 'wrong') {
-        setErrors({ password: 'Incorrect password. Please try again.' });
+        setErrors({ ...errors, password: 'Incorrect password. Please try again.' });
         return;
       }
       
@@ -155,8 +163,8 @@ const LoginPage = ({ setIsAuthenticated, setUser }) => {
                   id="rememberMe"
                   name="rememberMe"
                   checked={formData.rememberMe}
-                  onCheckedChange={(checked) => 
-                    setFormData(prev => ({ ...prev, rememberMe: checked }))
+                  onCheckedChange={(checked: boolean) =>
+                    setFormData({ ...formData, rememberMe: checked })
                   }
                   className="border-fer-text/30 data-[state=checked]:bg-fer-primary data-[state=checked]:border-fer-primary"
                 />
