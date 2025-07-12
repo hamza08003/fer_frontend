@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import axios from "../../lib/axios.ts"; // Adjust the import path as necessary
 
 const SignUpPage = (props: object) => {
   const [formData, setFormData] = useState({
@@ -64,19 +65,55 @@ const SignUpPage = (props: object) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-    
+
     setIsLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
+
+    try {
+      // API call to regiter
+      const reposnse = await axios.post('/fer/v1/auth/register/',
+          {
+            "username": formData.username,
+            "email": formData.email,
+            "name": formData.name,
+            "password": formData.password,
+            "password_confirm": formData.confirmPassword
+          })
+      const data = reposnse.data;
+
+      console.log(data);
+
       setIsLoading(false);
       setShowSuccess(true);
       toast({
         title: "Account created successfully!",
         description: "Please check your email to verify your account.",
       });
-    }, 2000);
-  };
+    } catch (e)
+    {
+        setIsLoading(false);
+        console.error(e);
+        if (e.response && e.response.data) {
+            const errorData = e.response.data;
+            if (errorData.errors) {
+              if (errorData.errors.username) {
+                setErrors(prev => ({ ...prev, username: errorData.errors.username[0] }));
+              }
+              if (errorData.errors.email) {
+                setErrors(prev => ({ ...prev, email: errorData.errors.email[0] }));
+              }
+              if (errorData.errors.password) {
+                setErrors(prev => ({ ...prev, password: errorData.errors.password[0] }));
+              }
+            }
+        } else {
+            toast({
+            title: "Error",
+            description: "An unexpected error occurred. Please try again.",
+            variant: 'destructive',
+            });
+        }
+    }
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;

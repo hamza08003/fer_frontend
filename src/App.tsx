@@ -17,6 +17,7 @@ import ChangePasswordPage from '@/components/auth/ChangePasswordPage';
 import TwoFAManagementPage from '@/components/auth/TwoFAManagementPage';
 import DeleteAccountPage from '@/components/auth/DeleteAccountPage';
 import NotFound from "./pages/NotFound";
+import axios from "axios";
 
 const queryClient = new QueryClient();
 
@@ -33,8 +34,13 @@ const App = () => {
   In a production app, you would typically fetch this state from an API or context provider
   to determine if the user is logged in or not.
   */}
+  const PrivateRoute = ({ element, isAuthenticated }) => {
+    return isAuthenticated ? element : <Navigate to="/login" />;
+  };
 
   // State to manage authentication status
+  const  response = axios.get("/user/authenticated");
+  
   const [isAuthenticated, setIsAuthenticated] = useState(true);
 
   // Create a mock user for testing protected routes
@@ -113,8 +119,16 @@ const App = () => {
               This avoids repeating the same logic for every protected route.
 
               */}
-              
-              <Route path="/profile" element={<UserProfilePage {...authProps} />} />
+              <Route
+                  path="/profile"
+                  element={
+                    <PrivateRoute
+                        isAuthenticated={isAuthenticated}
+                        element={<UserProfilePage {...authProps} />}
+                    />
+                  }
+              />
+
               <Route path="/edit-profile" element={<EditProfilePage {...authProps} />} />
               <Route path="/change-password" element={<ChangePasswordPage {...authProps} />} />
               <Route path="/2fa-settings" element={<TwoFAManagementPage {...authProps} />} />
