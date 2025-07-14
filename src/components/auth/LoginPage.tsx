@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import axios_ from "@/lib/axios.ts";
 
 const LoginPage = ({ setIsAuthenticated, setUser }) => {
   const [formData, setFormData] = useState({
@@ -26,8 +27,11 @@ const LoginPage = ({ setIsAuthenticated, setUser }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const [verificationError, setVerificationError] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     setIsLoading(true);
     setErrors({
         username: null,
@@ -35,47 +39,61 @@ const LoginPage = ({ setIsAuthenticated, setUser }) => {
         general: null
     });
     
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      
-      // Simulate different scenarios
-      if (formData.username === 'unverified@example.com') {
-        setErrors({...errors,  general: 'Please verify your email before signing in.' });
-        return;
-      }
-      
-      if (formData.password === 'wrong') {
-        setErrors({ ...errors, password: 'Incorrect password. Please try again.' });
-        return;
-      }
-      
-      if (formData.username === '2fa@example.com') {
-        // Redirect to 2FA page
-        navigate('/2fa-code');
-        return;
-      }
-      
-      // Success
-      const mockUser = {
-        id: 1,
-        name: 'John Doe',
+    // api call
+    let response;
+    try {
+      response = await axios_.post("/fer/v1/auth/login/", {
         username: formData.username,
-        email: formData.username,
-        joinDate: '2024-01-15',
-        loginCount: 42,
-        emailVerified: true,
-        twoFactorEnabled: false
-      };
-      
-      setUser(mockUser);
-      setIsAuthenticated(true);
-      toast({
-        title: "Welcome back!",
-        description: "You've successfully signed in to your account.",
-      });
-      navigate('/profile');
-    }, 1500);
+        password: formData.password
+      })
+    } catch (e) {
+      setIsLoading(false);
+      console.error(e);
+      if (e.response && e.response.data && e.response.data.message) {
+        setErrors({ ...errors, general: e.response.data.message });
+        if (e.response.data.email_verified === false)
+        {
+          setVerificationError(true);
+        }
+      } else {
+        setErrors({ ...errors, general: 'Network error. Please check your connection.' });
+      }
+      return;
+    }
+
+    console.log(response.data)
+
+
+    setIsLoading(false);
+
+    return;
+    // Simulate different scenarios
+
+    if (formData.username === '2fa@example.com') {
+      // Redirect to 2FA page
+      navigate('/2fa-code');
+      return;
+    }
+
+    // Success
+    const mockUser = {
+      id: 1,
+      name: 'John Doe',
+      username: formData.username,
+      email: formData.username,
+      joinDate: '2024-01-15',
+      loginCount: 42,
+      emailVerified: true,
+      twoFactorEnabled: false
+    };
+
+    setUser(mockUser);
+    setIsAuthenticated(true);
+    toast({
+      title: "Welcome back!",
+      description: "You've successfully signed in to your account.",
+    });
+    navigate('/profile');
   };
 
   const handleChange = (e) => {
@@ -108,9 +126,13 @@ const LoginPage = ({ setIsAuthenticated, setUser }) => {
           {errors.general && (
             <div className="p-4 bg-fer-error/10 border border-fer-error rounded-lg">
               <p className="text-fer-error text-sm">{errors.general}</p>
-              <Link to="/verify-email" className="text-fer-primary hover:underline text-sm">
-                Resend verification email
-              </Link>
+              {
+                verificationError && (
+                      <Link to="/verify-email" className="text-fer-primary hover:underline text-sm">
+                        Resend verification email
+                      </Link>
+                  )
+              }
             </div>
           )}
 
