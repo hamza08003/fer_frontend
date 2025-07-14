@@ -137,7 +137,7 @@ const SignUpPage = (props: object) => {
                 We've sent a verification link to <strong>{formData.email}</strong>
               </p>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-4 flex flex-col gap-y-4">
               <Button 
                 variant="outline" 
                 className="w-full border-fer-info text-fer-info hover:bg-fer-info/10"
