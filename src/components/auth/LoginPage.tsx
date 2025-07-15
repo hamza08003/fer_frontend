@@ -9,8 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import axios_ from "@/lib/axios.ts";
+import {token} from "@/utils/auth.ts";
 
-const LoginPage = ({ setIsAuthenticated, setUser }) => {
+const LoginPage = () => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -46,6 +47,11 @@ const LoginPage = ({ setIsAuthenticated, setUser }) => {
         username: formData.username,
         password: formData.password
       })
+      if (response.data.two_factor_required === true) {
+        // Redirect to 2FA page
+        navigate('/2fa-code');
+        return;
+      }
     } catch (e) {
       setIsLoading(false);
       console.error(e);
@@ -61,39 +67,18 @@ const LoginPage = ({ setIsAuthenticated, setUser }) => {
       return;
     }
 
-    console.log(response.data)
+    token.set(response.data.token, formData.rememberMe);
+
 
 
     setIsLoading(false);
 
-    return;
-    // Simulate different scenarios
-
-    if (formData.username === '2fa@example.com') {
-      // Redirect to 2FA page
-      navigate('/2fa-code');
-      return;
-    }
-
-    // Success
-    const mockUser = {
-      id: 1,
-      name: 'John Doe',
-      username: formData.username,
-      email: formData.username,
-      joinDate: '2024-01-15',
-      loginCount: 42,
-      emailVerified: true,
-      twoFactorEnabled: false
-    };
-
-    setUser(mockUser);
-    setIsAuthenticated(true);
     toast({
       title: "Welcome back!",
       description: "You've successfully signed in to your account.",
     });
-    navigate('/profile');
+    // redirect to profile
+    window.location.href = '/profile';
   };
 
   const handleChange = (e) => {
