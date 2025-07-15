@@ -2,9 +2,11 @@ import { Link } from 'react-router-dom';
 import { Sparkles, Shield, Zap, Camera, BarChart, Eye, LucideGithub, Facebook, Twitter, Instagram, Mail, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {isLoggedIn} from "@/utils/auth.ts";
 
-const WelcomePage = ({ isAuthenticated }) => {
-  if (isAuthenticated) {
+const WelcomePage = () => {
+
+  if (isLoggedIn()) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-fer-bg-main">
         <Card className="w-full max-w-md p-10 bg-fer-bg-card border-fer-bg-card text-center shadow-lg">

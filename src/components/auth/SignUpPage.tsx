@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import axios from "../../lib/axios.ts"; // Adjust the import path as necessary
 
-const SignUpPage = (props: object) => {
+const SignUpPage = () => {
   const [formData, setFormData] = useState({
     name: '',
     username: '',
