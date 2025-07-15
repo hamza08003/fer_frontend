@@ -4,14 +4,49 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {isLoggedIn, token} from "@/utils/auth";
+import axios_ from "@/lib/axios.ts";
+import {useQuery} from "@tanstack/react-query";
+import {useEffect, useState} from "react";
+import { getDate } from '@/utils/date';
 
-const UserProfilePage = ({ user, setIsAuthenticated, setUser }) => {
+import { UserProfile } from '@/lib/types';
+
+const UserProfilePage = () => {
   const handleLogout = () => {
-    setIsAuthenticated(false);
-    setUser(null);
+    token.remove();
+    window.location.href = '/login';  // Redirect to login page after logout
+    // Optionally, you can also clear any user state here
+    console.log("User logged out");
+    window.location.reload(); // Reload to reset the app state
   };
 
-  if (!user) return null;
+  const auth_token = isLoggedIn();
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const {  isLoading, data, error, isPending } = useQuery(
+      {
+        queryKey: ['userProfile'],
+        queryFn: () => axios_.get(`/fer/v1/users/me/`, {
+          headers:{
+            'Authorization': `Token ${auth_token}`
+          }
+        })
+            .then(res => res.data),
+        enabled: !!auth_token,  // only run if user is logged in
+      });
+
+  useEffect(() => {
+    if (data) {
+      setUser(data.profile);
+    }
+  }, [data]);
+
+  if (!auth_token) return null;
+
+  else console.log("User data:", user);
+
+  if (isLoading || !user) return <div>Loading user…</div>;
+  if (error)     return <div>Error: {error.message}</div>;
 
   return (
     <div className="min-h-screen bg-fer-bg-main p-4">
@@ -46,7 +81,7 @@ const UserProfilePage = ({ user, setIsAuthenticated, setUser }) => {
               
               {/* Add more spacing with mb-8 */}
               <div className="flex flex-wrap gap-2 mb-8">
-                {user.emailVerified ? (
+                {user.email_verified ? (
                   <Badge className="bg-fer-accent/20 text-fer-accent border-fer-accent">
                     <Check className="w-3 h-3 mr-1" />
                     Email Verified
@@ -58,7 +93,7 @@ const UserProfilePage = ({ user, setIsAuthenticated, setUser }) => {
                   </Badge>
                 )}
                 
-                {user.twoFactorEnabled ? (
+                {user.two_factor_enabled ? (
                   <Badge className="bg-fer-info/20 text-fer-info border-fer-info">
                     <Shield className="w-3 h-3 mr-1" />
                     2FA Enabled
@@ -96,7 +131,7 @@ const UserProfilePage = ({ user, setIsAuthenticated, setUser }) => {
             <div className="flex items-center space-x-3">
               <Calendar className="w-5 h-5 text-fer-text/70" />
               <div>
-                <p className="text-fer-text">{user.joinDate}</p>
+                <p className="text-fer-text">{getDate(user.date_joined)}</p>
                 <p className="text-fer-text/60 text-sm">Member since</p>
               </div>
             </div>
@@ -104,7 +139,7 @@ const UserProfilePage = ({ user, setIsAuthenticated, setUser }) => {
             <div className="flex items-center space-x-3">
               <Clock className="w-5 h-5 text-fer-text/70" />
               <div>
-                <p className="text-fer-text">{user.lastLogin}</p>
+                <p className="text-fer-text">{getDate(user.last_login)}</p>
                 <p className="text-fer-text/60 text-sm">Last login</p>
               </div>
             </div>
