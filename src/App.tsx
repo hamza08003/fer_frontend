@@ -18,6 +18,7 @@ import TwoFAManagementPage from '@/components/auth/TwoFAManagementPage';
 import DeleteAccountPage from '@/components/auth/DeleteAccountPage';
 import NotFound from "./pages/NotFound";
 import axios from "axios";
+import {isLoggedIn, token} from "@/utils/auth.ts";
 
 const queryClient = new QueryClient();
 
@@ -38,29 +39,15 @@ const App = () => {
     return isAuthenticated ? element : <Navigate to="/login" />;
   };
 
-  // State to manage authentication status
-  const  response = axios.get("/user/authenticated");
-  
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const PublicOnlyRoute = ({ element, isAuthenticated }) => {
+    return !isAuthenticated ? element : <Navigate to="/" />;
+  }
 
-  // Create a mock user for testing protected routes
-  const [user, setUser] = useState({
-    id: 1,
-    name: 'John Doe',
-    username: 'johndoe',
-    email: 'john@example.com',
-    joinDate: '2024-01-15',
-    lastLogin: '2024-07-08 14:32',
-    emailVerified: true,
-    twoFactorEnabled: false
-  });
 
-  const authProps = {
-    isAuthenticated,
-    setIsAuthenticated,
-    user,
-    setUser
-  };
+  const isAuthenticated = isLoggedIn();
+
+  // const navigate = useNavigate();
+  // ping backend to check if the user is authenticated
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -70,15 +57,59 @@ const App = () => {
         <BrowserRouter>
           <div className="min-h-screen bg-fer-bg-main">
             <Routes>
-              <Route path="/" element={<WelcomePage {...authProps} />} />
-              <Route path="/signup" element={<SignUpPage {...authProps} />} />
-              <Route path="/login" element={<LoginPage {...authProps} />} />
-              <Route path="/2fa-code" element={<TwoFACodePage {...authProps} />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage {...authProps} />} />
-              <Route path="/reset-password" element={<ResetPasswordPage {...authProps} />} />
-              <Route path="/verify-email" element={<EmailVerificationPage {...authProps} />} />
+              <Route path="/" element={<WelcomePage />} />
+              <Route
+                  path="/signup"
+                  element={
+                    <PublicOnlyRoute
+                        isAuthenticated={isAuthenticated}
+                        element={<SignUpPage />}
+                    />
+                  }
+                />
+              <Route path="/login" element={
+                <PublicOnlyRoute
+                  isAuthenticated={isAuthenticated}
+                  element={<LoginPage />}
+                />
+              } />
+              <Route
+                  path="/2fa-code" element={
+                    <PublicOnlyRoute
+                        isAuthenticated={isAuthenticated}
+                        element={<TwoFACodePage />}
+                    />
+              } />
+              <Route
+                  path="/forgot-password"
+                  element={
+                    <PublicOnlyRoute
+                        isAuthenticated={isAuthenticated}
+                        element={<ForgotPasswordPage />}
+                    />
+                  }
+              />
+              <Route
+                  path="/reset-password"
+                  element={
+                    <PublicOnlyRoute
+                        isAuthenticated={isAuthenticated}
+                        element={<ResetPasswordPage />}
+                    />
+                  }
+              />
+              <Route
+                  path="/verify-email"
+                  element={
+                    <PublicOnlyRoute
+                        isAuthenticated={isAuthenticated}
+                        element={<EmailVerificationPage />}
+                    />
+                  }
+              />
+
               
-              {/* ------------------ Protected Routes ------------------------
+              {/* -------+----------- Protected Routes ------------------------
 
               Modified for Testing Purposes - Currently components are rendered 
               directly without authentication check.
@@ -124,15 +155,52 @@ const App = () => {
                   element={
                     <PrivateRoute
                         isAuthenticated={isAuthenticated}
-                        element={<UserProfilePage {...authProps} />}
+                        element={<UserProfilePage  />}
                     />
                   }
               />
 
-              <Route path="/edit-profile" element={<EditProfilePage {...authProps} />} />
-              <Route path="/change-password" element={<ChangePasswordPage {...authProps} />} />
-              <Route path="/2fa-settings" element={<TwoFAManagementPage {...authProps} />} />
-              <Route path="/delete-account" element={<DeleteAccountPage {...authProps} />} />
+                <Route
+                    path="/edit-profile"
+                    element={
+                        <PrivateRoute
+                            isAuthenticated={isAuthenticated}
+                            element={<EditProfilePage />}
+                        />
+                    }
+                />
+
+                <Route
+                    path="/change-password"
+                    element={
+                        <PrivateRoute
+                            isAuthenticated={isAuthenticated}
+                            element={<ChangePasswordPage />}
+                        />
+                    }
+                />
+
+                <Route
+                    path="/2fa-settings"
+                    element={
+                        <PrivateRoute
+                            isAuthenticated={isAuthenticated}
+                            element={<TwoFAManagementPage />}
+                        />
+                    }
+                />
+
+                <Route
+                    path="/delete-account"
+                    element={
+                        <PrivateRoute
+                            isAuthenticated={isAuthenticated}
+                            element={<DeleteAccountPage />}
+                        />
+                    }
+                />
+
+
               
               <Route path="*" element={<NotFound />} />
             </Routes>
