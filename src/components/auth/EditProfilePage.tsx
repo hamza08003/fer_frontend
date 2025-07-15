@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import {useEffect, useState} from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, User, Mail, AtSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,22 +7,67 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
+import {getAuthHeader, isLoggedIn} from "@/utils/auth.ts";
+import {useQuery} from "@tanstack/react-query";
+import axios_ from "@/lib/axios.ts";
 
-const EditProfilePage = ({ user, setUser }) => {
-  const [formData, setFormData] = useState({
-    name: user?.name || '',
-    username: user?.username || '',
-    email: user?.email || ''
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [emailChanged, setEmailChanged] = useState(false);
-  const [errors, setErrors] = useState({});
-  
+import {UserProfile} from "@/lib/types.ts";
+
+const EditProfilePage = () => {
+  const auth_token = isLoggedIn();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isLoadingChanges, setIsLoadingChanges] = useState(false);
+  const [emailChanged, setEmailChanged] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string | null>>({
+    name: null,
+    username: null,
+    email: null
+  });
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    username: '',
+    email: ''
+  });
 
+  // Query to get user profile
+  const { isLoading: isLoadingProfile, data: userData, error } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: () => axios_.get(`/fer/v1/users/me/`,
+        {
+          headers: {
+            ...getAuthHeader()
+          }
+        }
+        ).then(res => res.data.profile),
+    enabled: !!auth_token,  // only run if user is logged in
+  });
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!auth_token) {
+      window.location.href = '/login';
+    }
+  }, [auth_token]);
+
+  // Update form data when user data is loaded
+  useEffect(() => {
+    if (userData) {
+      setUser(userData);
+      setFormData({
+        name: userData.name || '',
+        username: userData.username || '',
+        email: userData.email || ''
+      });
+    }
+  }, [userData]);
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors = {
+        name: null,
+        username: null,
+        email: null
+    };
     
     if (!formData.name.trim()) newErrors.name = 'Name is required';
     if (!formData.username.trim()) newErrors.username = 'Username is required';
@@ -31,42 +76,54 @@ const EditProfilePage = ({ user, setUser }) => {
     if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
     
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return !Object.values(newErrors).some(error => error !== null);
   };
 
   const handleSubmit = async (e) => {
+    console.log(e.currentTarget.value)
     e.preventDefault();
     if (!validateForm()) return;
-    
-    setIsLoading(true);
+    console.log(userData.name, formData.name);
+    setIsLoadingChanges(true);
     const emailHasChanged = formData.email !== user.email;
     
-    setTimeout(() => {
-      setIsLoading(false);
-      
-      // Update user data
-      const updatedUser = {
-        ...user,
-        ...formData,
-        emailVerified: emailHasChanged ? false : user.emailVerified
-      };
-      
-      setUser(updatedUser);
-      
-      if (emailHasChanged) {
-        setEmailChanged(true);
-        toast({
-          title: "Profile updated!",
-          description: "Please check your new email to verify it.",
+
+    let response;
+    try {
+        response = await axios_.put(`/fer/v1/users/me/update-profile/`, {
+            name: formData.name,
+            username: formData.username,
+            email: formData.email
+        }, {
+            headers: getAuthHeader()
         });
-      } else {
-        toast({
-          title: "Profile updated successfully!",
-          description: "Your changes have been saved.",
-        });
-        navigate('/profile');
+
+        if (emailHasChanged) {
+            setEmailChanged(true);
+        } else {
+            toast({
+            title: "Profile updated",
+            description: "Your profile has been successfully updated.",
+            });
+            navigate('/profile');
+        }
+    } catch (e) {
+      setIsLoadingChanges(false);
+      if (e.response && e.response.data) {
+        const errorData = e.response.data;
+        if (errorData.name) {
+          setErrors(prev => ({ ...prev, name: errorData.name[0] }));
+        }
+        if (errorData.username) {
+          setErrors(prev => ({ ...prev, username: errorData.username[0] }));
+        }
+        if (errorData.email) {
+          setErrors(prev => ({ ...prev, email: errorData.email[0] }));
+        }
       }
-    }, 2000);
+    }
+
+
   };
 
   const handleChange = (e) => {
@@ -76,7 +133,7 @@ const EditProfilePage = ({ user, setUser }) => {
       setErrors(prev => ({ ...prev, [name]: null }));
     }
   };
-
+  if (!user) return <div className="min-h-screen text-white flex items-center justify-center">Loading...</div>;
   if (emailChanged) {
     return (
       <div className="min-h-screen bg-fer-bg-main p-4">
@@ -215,10 +272,11 @@ const EditProfilePage = ({ user, setUser }) => {
               <Button
                 type="submit"
                 className="flex-1 bg-fer-primary hover:bg-fer-primary/90 text-white"
-                disabled={isLoading}
+                // disabled={isLoading}
+                onClick={(e) => handleSubmit(e)}
               >
                 <Save className="w-4 h-4 mr-2" />
-                {isLoading ? 'Saving...' : 'Save Changes'}
+                {isLoadingChanges ? 'Saving...' : 'Save Changes'}
               </Button>
               <Link to="/profile" className="flex-1">
                 <Button type="button" variant="outline" className="w-full border-fer-text/20 text-fer-text hover:bg-fer-text/5">
