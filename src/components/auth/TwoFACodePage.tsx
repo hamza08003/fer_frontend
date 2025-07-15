@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 
-const TwoFACodePage = ({ setIsAuthenticated, setUser }) => {
+const TwoFACodePage = () => {
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -59,8 +59,7 @@ const TwoFACodePage = ({ setIsAuthenticated, setUser }) => {
               twoFactorEnabled: true
             };
             
-            setUser(mockUser);
-            setIsAuthenticated(true);
+
             toast({
               title: "Authentication successful!",
               description: "Welcome back to your account.",
@@ -82,7 +81,7 @@ const TwoFACodePage = ({ setIsAuthenticated, setUser }) => {
         }, 1000);
       }
     }
-  }, [animationState, animatingIndex, code, toast, setIsAuthenticated, setUser, navigate]);
+  }, [animationState, animatingIndex, code, toast, navigate]);
 
   const handleCodeChange = (index, value) => {
     if (value.length > 1) return;
@@ -158,8 +157,8 @@ const TwoFACodePage = ({ setIsAuthenticated, setUser }) => {
           twoFactorEnabled: true
         };
         
-        setUser(mockUser);
-        setIsAuthenticated(true);
+        // setUser(mockUser);
+        // setIsAuthenticated(true);
         toast({
           title: "Authentication successful!",
           description: "Signed in using backup code.",

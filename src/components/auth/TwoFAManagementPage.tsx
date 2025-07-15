@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
 
-const TwoFAManagementPage = ({ user, setUser }) => {
+const TwoFAManagementPage = () => {
   const [isEnabling, setIsEnabling] = useState(false);
   const [isDisabling, setIsDisabling] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
@@ -20,6 +20,8 @@ const TwoFAManagementPage = ({ user, setUser }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [copiedCode, setCopiedCode] = useState('');
   const [isRegenerating, setIsRegenerating] = useState(false);
+
+  const [user, setUser] = useState();
   
   const { toast } = useToast();
 

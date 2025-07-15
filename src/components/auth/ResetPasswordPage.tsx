@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 
-const ResetPasswordPage = (props: object) => {
+const ResetPasswordPage = () => {
   const [formData, setFormData] = useState({
     password: '',
     confirmPassword: ''
