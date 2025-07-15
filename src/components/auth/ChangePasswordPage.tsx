@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import axios_ from '@/lib/axios';
-import {getAuthHeader} from "@/utils/auth.ts";
+import {getAuthHeader, token} from "@/utils/auth.ts";
 
 interface errorsType {
     currentPassword: string | null;

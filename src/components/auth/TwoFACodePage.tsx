@@ -1,12 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import {Link, useLocation, useNavigate, useParams} from 'react-router-dom';
 import { ArrowLeft, Shield, Check } from 'lucide-react'; // Added Check icon
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import axios_ from "@/lib/axios.ts";
+import {getAuthHeader, token} from "@/utils/auth.ts";
 
 const TwoFACodePage = () => {
+  const { state } = useLocation()
+  const {token: mfa_token, rememberMe} = state || {};
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -19,6 +23,8 @@ const TwoFACodePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const inputRefs = useRef([]);
+
+  console.log("Token:", mfa_token, "Remember Me:", rememberMe);
 
   useEffect(() => {
     // Focus first input on mount
@@ -115,12 +121,31 @@ const TwoFACodePage = () => {
     
     setIsLoading(true);
     
-    // Start animation sequence
-    setTimeout(() => {
+    //
+
+    let response;
+    try {
+      console.log("Submitting 2FA code:", fullCode, "with token:", mfa_token);
+      response = await axios_.post ("/fer/v1/auth/verify-2fa/",
+        {
+          code: fullCode,
+          temp_token: mfa_token,
+        }
+        )
+    } catch (e) {
       setIsLoading(false);
-      setAnimationState('animating');
-      setAnimatingIndex(0);
-    }, 600);
+      console.error(e);
+      if (e.response && e.response.data && e.response.data.message) setError(e.response.data.message);
+      return;
+    }
+
+    token.set(response.data.token, rememberMe);
+
+    setIsLoading(false);
+    setAnimationState('animating');
+    setAnimatingIndex(0);
+
+    window.location.reload()
   };
 
   // Get the CSS class for each OTP input

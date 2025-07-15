@@ -48,8 +48,11 @@ const LoginPage = () => {
         password: formData.password
       })
       if (response.data.two_factor_required === true) {
+        // token.set(response.data.token, formData.rememberMe);
         // Redirect to 2FA page
-        navigate('/2fa-code');
+        navigate(`/2fa-code`, {
+            state: { token: response.data.temp_token, rememberMe: formData.rememberMe }
+        });
         return;
       }
     } catch (e) {
