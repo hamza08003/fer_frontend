@@ -7,26 +7,46 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import axios_ from '@/lib/axios';
+import {getAuthHeader} from "@/utils/auth.ts";
 
-const ChangePasswordPage = ({ setIsAuthenticated, setUser }) => {
-  const [formData, setFormData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
+interface errorsType {
+    currentPassword: string | null;
+    newPassword: string | null;
+    confirmPassword: string | null;
+}
+
+const ChangePasswordPage = () => {
+  const [formData, setFormData] = useState<errorsType>(
+    {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    }
+  );
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
     confirm: false
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<errorsType>(
+    {
+      currentPassword: null,
+      newPassword: null,
+      confirmPassword: null
+    }
+  );
   
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors = {
+        currentPassword: null,
+        newPassword: null,
+        confirmPassword: null
+    }
     
     if (!formData.currentPassword) newErrors.currentPassword = 'Current password is required';
     if (!formData.newPassword) newErrors.newPassword = 'New password is required';
@@ -39,37 +59,49 @@ const ChangePasswordPage = ({ setIsAuthenticated, setUser }) => {
     }
     
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return Object.values(newErrors).some(error => error === null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-    
+
     setIsLoading(true);
-    
-    setTimeout(() => {
-      setIsLoading(false);
-      
-      // Simulate wrong current password
-      if (formData.currentPassword === 'wrongpassword') {
-        setErrors({ currentPassword: 'Current password is incorrect' });
+
+    let response;
+    try {
+      response = await axios_.post('/fer/v1/users/me/change-password/',
+          {
+            "old_password": formData.currentPassword,
+            "new_password": formData.newPassword,
+            "new_password_confirm": formData.confirmPassword
+          },
+          {
+            headers: {
+              ...getAuthHeader()
+            },
+          }
+      );
+    } catch (e) {
+        setIsLoading(false);
+        console.error(e);
+        if (e.response && e.response.data && e.response.data.message) {
+            setErrors(prev => ({ ...prev, currentPassword: e.response.data.message }));
+        } else {
+            setErrors(prev => ({ ...prev, currentPassword: 'Network error. Please check your connection.' }));
+        }
         return;
-      }
-      
-      // Success - log user out
-      toast({
-        title: "Password changed successfully!",
-        description: "You've been logged out for security. Please log in with your new password.",
-      });
-      
-      setTimeout(() => {
-        setIsAuthenticated(false);
-        setUser(null);
-        navigate('/login');
-      }, 2000);
-    }, 2000);
-  };
+    }
+    toast({
+        title: "Password Changed Successfully",
+        description: "You will be logged out of all devices."
+    })
+
+    setIsLoading(false);
+    token.remove();
+    window.location.reload();
+
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
