@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trash2, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -10,7 +10,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 
-const DeleteAccountPage = ({ user, setIsAuthenticated, setUser }) => {
+import { UserProfile } from '@/lib/types';
+
+const DeleteAccountPage = () => {
+
+  const {state} = useLocation();
+
+  const user: UserProfile = state;
+
   const [formData, setFormData] = useState({
     password: '',
     twoFactorCode: '',
@@ -21,16 +28,26 @@ const DeleteAccountPage = ({ user, setIsAuthenticated, setUser }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showGoodbye, setShowGoodbye] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState({
+    password: null,
+    twoFactorCode: null,
+    confirmText: null,
+    understood: null
+  });
   
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors = {
+        password: null,
+        twoFactorCode: null,
+        confirmText: null,
+        understood: null
+    };
     
     if (!formData.password) newErrors.password = 'Password is required';
-    if (user.twoFactorEnabled && !formData.twoFactorCode) {
+    if (user.two_factor_enabled && !formData.twoFactorCode) {
       newErrors.twoFactorCode = '2FA code is required';
     }
     if (formData.confirmText !== 'DELETE') {
@@ -41,41 +58,47 @@ const DeleteAccountPage = ({ user, setIsAuthenticated, setUser }) => {
     }
     
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return Object.values(newErrors).every(error => error === null);
   };
 
   const handleDeleteAccount = async () => {
     if (!validateForm()) return;
     
     setIsDeleting(true);
-    
-    setTimeout(() => {
-      setIsDeleting(false);
-      
-      // Simulate wrong password
-      if (formData.password === 'wrongpassword') {
-        setErrors({ password: 'Incorrect password' });
-        setShowDeleteModal(false);
-        return;
-      }
-      
-      // Simulate wrong 2FA code
-      if (user.twoFactorEnabled && formData.twoFactorCode !== '123456') {
-        setErrors({ twoFactorCode: 'Invalid 2FA code' });
-        setShowDeleteModal(false);
-        return;
-      }
-      
-      // Success - show goodbye screen
+
+    let response;
+    try {
+
+    } catch (e) {
+
+    }
+
+    setIsDeleting(false);
+
+    // Simulate wrong password
+    if (formData.password === 'wrongpassword') {
+      setErrors({...errors,  password: 'Incorrect password' });
       setShowDeleteModal(false);
-      setShowGoodbye(true);
-      
-      setTimeout(() => {
-        setIsAuthenticated(false);
-        setUser(null);
-        navigate('/');
-      }, 3000);
-    }, 2000);
+      return;
+    }
+
+    // Simulate wrong 2FA code
+    if (user.two_factor_enabled && formData.twoFactorCode !== '123456') {
+      setErrors({...errors, twoFactorCode: 'Invalid 2FA code' });
+      setShowDeleteModal(false);
+      return;
+    }
+
+    // Success - show goodbye screen
+    setShowDeleteModal(false);
+    setShowGoodbye(true);
+
+    setTimeout(() => {
+      // setIsAuthenticated(false);
+      // setUser(null);
+      navigate('/');
+    }, 3000);
+
   };
 
   const handleChange = (e) => {
@@ -178,7 +201,7 @@ const DeleteAccountPage = ({ user, setIsAuthenticated, setUser }) => {
                 {errors.password && <p className="text-fer-error text-sm">{errors.password}</p>}
               </div>
 
-              {user.twoFactorEnabled && (
+              {user.two_factor_enabled && (
                 <div className="space-y-2">
                   <Label htmlFor="twoFactorCode" className="text-fer-text">2FA Code</Label>
                   <Input
@@ -223,8 +246,8 @@ const DeleteAccountPage = ({ user, setIsAuthenticated, setUser }) => {
                     id="understood"
                     name="understood"
                     checked={formData.understood}
-                    onCheckedChange={(checked) => 
-                      setFormData(prev => ({ ...prev, understood: checked }))
+                    onCheckedChange={(checked: boolean) =>
+                      setFormData({ ...errors, understood: checked })
                     }
                     className="border-fer-text/30 data-[state=checked]:bg-fer-error data-[state=checked]:border-fer-error mt-1"
                   />
@@ -241,7 +264,7 @@ const DeleteAccountPage = ({ user, setIsAuthenticated, setUser }) => {
                 <Button
                   variant="outline"
                   className="w-full border-fer-error text-fer-error hover:bg-fer-error hover:text-white h-12"
-                  disabled={!formData.password || !formData.confirmText || !formData.understood || (user.twoFactorEnabled && !formData.twoFactorCode)}
+                  disabled={!formData.password || !formData.confirmText || !formData.understood || (user.two_factor_enabled && !formData.twoFactorCode)}
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
                   Delete My Account

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { User, Mail, Calendar, LogIn, Shield, Edit, Settings, Trash2, Check, X, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,12 +13,16 @@ import { getDate } from '@/utils/date';
 import { UserProfile } from '@/lib/types';
 
 const UserProfilePage = () => {
+  const navigate = useNavigate();
+
   const handleLogout = () => {
+    setIsLoggingOut(false);
     token.remove();
-    window.location.href = '/login';  // Redirect to login page after logout
     // Optionally, you can also clear any user state here
     console.log("User logged out");
-    window.location.reload(); // Reload to reset the app state
+    setTimeout(()=> {
+        navigate('/login', { replace: true });
+    }, 1000);
   };
 
   const auth_token = isLoggedIn();
@@ -34,6 +38,7 @@ const UserProfilePage = () => {
             .then(res => res.data),
         enabled: !!auth_token,  // only run if user is logged in
       });
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     if (data) {
@@ -58,6 +63,7 @@ const UserProfilePage = () => {
             onClick={handleLogout}
             variant="outline"
             className="border-fer-error text-fer-error hover:bg-fer-error/10"
+            disabled={isLoggingOut}
           >
             <LogIn className="w-4 h-4 mr-2" />
             Sign Out
@@ -178,7 +184,7 @@ const UserProfilePage = () => {
           <p className="text-fer-text/70 mb-4">
             Once you delete your account, there is no going back. Please be certain.
           </p>
-          <Link to="/delete-account">
+          <Link to="/delete-account" state={user}>
             <Button variant="outline" className="border-fer-error text-fer-error hover:bg-fer-error/10">
               <Trash2 className="w-4 h-4 mr-2" />
               Delete Account
