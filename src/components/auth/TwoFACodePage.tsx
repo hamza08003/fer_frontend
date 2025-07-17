@@ -19,7 +19,10 @@ const TwoFACodePage = () => {
   const [animationState, setAnimationState] = useState('idle'); // 'idle', 'animating', 'success', 'error'
   const [animatingIndex, setAnimatingIndex] = useState(-1);
   const [showSuccess, setShowSuccess] = useState(false); // New state for success message
-  
+
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+
   const navigate = useNavigate();
   const { toast } = useToast();
   const inputRefs = useRef([]);
@@ -132,6 +135,8 @@ const TwoFACodePage = () => {
           temp_token: mfa_token,
         }
         )
+      setIsRedirecting(true);
+
     } catch (e) {
       setIsLoading(false);
       console.error(e);
@@ -141,11 +146,15 @@ const TwoFACodePage = () => {
 
     token.set(response.data.token, rememberMe);
 
+
+
     setIsLoading(false);
     setAnimationState('animating');
     setAnimatingIndex(0);
 
-    window.location.reload()
+    setTimeout(() => {
+      navigate('/profile');
+    }, 100);
   };
 
   // Get the CSS class for each OTP input
