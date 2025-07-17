@@ -1,6 +1,6 @@
 
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import {Link, useLocation} from 'react-router-dom';
 import { ArrowLeft, Shield, QrCode, Key, Copy, Check, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -9,8 +9,17 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
+import {UserProfile} from "@/lib/types.ts";
+import axios_ from "@/lib/axios.ts";
+import { getAuthHeader } from '@/utils/auth';
 
 const TwoFAManagementPage = () => {
+
+  const {state} = useLocation();
+  const [user, setUser] = useState<UserProfile>(state);
+
+
+
   const [isEnabling, setIsEnabling] = useState(false);
   const [isDisabling, setIsDisabling] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
@@ -21,66 +30,85 @@ const TwoFAManagementPage = () => {
   const [copiedCode, setCopiedCode] = useState('');
   const [isRegenerating, setIsRegenerating] = useState(false);
 
-  const [user, setUser] = useState();
+  const [manualKey, setManualKey] = useState("")
+  const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [backupCodes, setBackupCodes] = useState<string[]>([]);
   
   const { toast } = useToast();
 
-  const qrCodeUrl = "https://via.placeholder.com/200x200/1E1E1E/FF6F00?text=QR+Code";
-  const manualKey = "JBSWY3DPEHPK3PXP";
-  const backupCodes = [
-    "1a2b3c4d", "5e6f7g8h", "9i0j1k2l", "3m4n5o6p", 
-    "7q8r9s0t", "1u2v3w4x", "5y6z7a8b", "9c0d1e2f"
-  ];
+  // fetch qr details
+  useEffect( () => {
+    (async () => {
+      if (!user.two_factor_enabled) {
+        try {
+          const response = await axios_.get(`/fer/v1/users/me/2fa/setup/`, {
+            headers: getAuthHeader(),
+          });
+          setManualKey(response.data.secret);
+          setQrCodeUrl(response.data.qr_code);
+          // setBackupCodes(response.data.backup_codes);
+        } catch (error) {
+          console.error("Error fetching 2FA setup details:", error);
+        }
+      }
+    })()
+  }, [])
 
   const handleEnable2FA = async (e) => {
     e.preventDefault();
     setIsEnabling(true);
     
-    setTimeout(() => {
+    let response ;
+    try {
+      response = await axios_.post(`/fer/v1/users/me/2fa/activate/`, {
+        code: verificationCode
+      }, {
+        headers: getAuthHeader(),
+      });
+    } catch (error) {
+      console.error("Error enabling 2FA:", error);
+      toast({
+        title: "Error enabling 2FA",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
       setIsEnabling(false);
-      
-      if (verificationCode === '123456') {
-        const updatedUser = { ...user, twoFactorEnabled: true };
-        setUser(updatedUser);
-        toast({
-          title: "2FA enabled successfully!",
-          description: "Your account is now more secure.",
-        });
-        setVerificationCode('');
-      } else {
-        toast({
-          title: "Invalid code",
-          description: "Please check your authenticator app and try again.",
-          variant: "destructive"
-        });
-      }
-    }, 1500);
+    }
+
+    setUser({ ...user, two_factor_enabled: true });
+    toast({
+      title: "2FA enabled",
+      description: "Two-factor authentication has been enabled.",
+    });
+    setVerificationCode('');
+
   };
+
 
   const handleDisable2FA = async (e) => {
     e.preventDefault();
     setIsDisabling(true);
-    
-    setTimeout(() => {
+
+    let response;
+    try {
+      response = await axios_.post(`/fer/v1/users/me/2fa/disable/`, {
+        password: disablePassword,
+        code: disableCode
+      }, {
+        headers: getAuthHeader(),
+      });
+    } catch (error) {
+      console.error("Error disabling 2FA:", error);
+      toast({
+        title: "Error disabling 2FA",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
       setIsDisabling(false);
-      
-      if (disablePassword === 'password' && disableCode === '123456') {
-        const updatedUser = { ...user, twoFactorEnabled: false };
-        setUser(updatedUser);
-        toast({
-          title: "2FA disabled",
-          description: "Two-factor authentication has been disabled.",
-        });
-        setDisablePassword('');
-        setDisableCode('');
-      } else {
-        toast({
-          title: "Invalid credentials",
-          description: "Please check your password and code.",
-          variant: "destructive"
-        });
-      }
-    }, 1500);
+    }
+    setUser({ ...user, two_factor_enabled: false });
   };
 
   const copyToClipboard = (text, type) => {
@@ -124,10 +152,10 @@ const TwoFAManagementPage = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                user.twoFactorEnabled ? 'bg-fer-accent/20' : 'bg-fer-text/10'
+                user.two_factor_enabled ? 'bg-fer-accent/20' : 'bg-fer-text/10'
               }`}>
                 <Shield className={`w-6 h-6 ${
-                  user.twoFactorEnabled ? 'text-fer-accent' : 'text-fer-text/50'
+                  user.two_factor_enabled ? 'text-fer-accent' : 'text-fer-text/50'
                 }`} />
               </div>
               <div>
@@ -135,7 +163,7 @@ const TwoFAManagementPage = () => {
                   Two-Factor Authentication
                 </h3>
                 <p className="text-fer-text/70">
-                  {user.twoFactorEnabled 
+                  {user.two_factor_enabled
                     ? 'Your account is protected with 2FA' 
                     : 'Add an extra layer of security to your account'
                   }
@@ -143,16 +171,16 @@ const TwoFAManagementPage = () => {
               </div>
             </div>
             <Badge className={
-              user.twoFactorEnabled 
+              user.two_factor_enabled
                 ? 'bg-fer-accent/20 text-fer-accent border-fer-accent'
                 : 'bg-fer-text/10 text-fer-text/70 border-fer-text/30'
             }>
-              {user.twoFactorEnabled ? 'Enabled' : 'Disabled'}
+              {user.two_factor_enabled ? 'Enabled' : 'Disabled'}
             </Badge>
           </div>
         </Card>
 
-        {!user.twoFactorEnabled ? (
+        {!user.two_factor_enabled ? (
           // Enable 2FA Section
           <Card className="p-6 bg-fer-bg-card border-fer-bg-card">
             <div className="space-y-6">

@@ -166,7 +166,7 @@ const UserProfilePage = () => {
               </Button>
             </Link>
             
-            <Link to="/2fa-settings" className="block">
+            <Link to="/2fa-settings" className="block" state={user}>
               <Button 
                 variant="outline" 
                 className="w-full justify-start bg-fer-bg-card border-fer-primary/30 text-fer-text hover:bg-fer-primary/5" 

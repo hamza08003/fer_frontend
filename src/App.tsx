@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import {useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -35,13 +35,63 @@ const App = () => {
   In a production app, you would typically fetch this state from an API or context provider
   to determine if the user is logged in or not.
   */}
-  const PrivateRoute = ({ element, isAuthenticated }) => {
-    return isAuthenticated ? element : <Navigate to="/login" />;
-  };
+    const PrivateRoute = ({ isAuthenticated, element }) => {
+        const [checking, setChecking] = useState(true);
+        const [isAuth, setIsAuth] = useState(isAuthenticated);
 
-  const PublicOnlyRoute = ({ element, isAuthenticated }) => {
-    return !isAuthenticated ? element : <Navigate to="/" />;
-  }
+        useEffect(() => {
+            // Check token validity
+            const checkAuth = async () => {
+                const auth = isLoggedIn(); // Your auth checking function
+                setIsAuth(auth);
+                setChecking(false);
+            };
+
+            checkAuth();
+        }, []);
+
+        if (checking) {
+            return (
+                <div className="min-h-screen bg-fer-bg-main flex items-center justify-center">
+                    <div className="text-center">
+                        <div className="w-16 h-16 border-4 border-fer-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                        <p className="text-fer-text font-medium text-red-800">Loading...</p>
+                    </div>
+                </div>
+            );
+        }
+
+        return isAuth ? element : <Navigate to="/login" />;
+    };
+
+    const PublicOnlyRoute = ({ isAuthenticated, element }) => {
+        const [checking, setChecking] = useState(true);
+        const [isAuth, setIsAuth] = useState(isAuthenticated);
+
+        useEffect(() => {
+            // Check token validity
+            const checkAuth = async () => {
+                const auth = isLoggedIn(); // Your auth checking function
+                setIsAuth(auth);
+                setChecking(false);
+            };
+
+            checkAuth();
+        }, []);
+
+        if (checking) {
+            return (
+                <div className="min-h-screen bg-fer-bg-main flex items-center justify-center">
+                    <div className="text-center">
+                        <div className="w-16 h-16 border-4 border-fer-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                        <p className="text-fer-text font-medium">Loading...</p>
+                    </div>
+                </div>
+            );
+        }
+
+        return !isAuth ? element : <Navigate to="/" />;
+    };
 
 
   const isAuthenticated = isLoggedIn();
